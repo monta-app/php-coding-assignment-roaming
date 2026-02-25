@@ -19,23 +19,23 @@ class PullClient
 
     public function getAllData(string $url, OcpiClientHeaders $headers): array
     {
-        $results = [];
+        $res = [];
         $currentUrl = $url;
         $attempt = 0;
 
         while ($currentUrl !== null) {
             try {
-                $response = $this->client->get($currentUrl, [
+                $r = $this->client->get($currentUrl, [
                     'headers' => $headers->toArray(),
                 ]);
 
-                $body = json_decode($response->getBody()->getContents(), true);
-                $responseHeaders = $response->getHeaders();
+                $body = json_decode($r->getBody()->getContents(), true);
+                $head = $r->getHeaders();
 
-                $ocpiResponse = OcpiResponse::fromHttpResponse($body, $responseHeaders);
-                $results[] = $ocpiResponse;
+                $resp = OcpiResponse::fromHttpResponse($body, $head);
+                $res[] = $resp;
 
-                $nextUrl = substr($ocpiResponse->linkHeader, 1, strpos($ocpiResponse->linkHeader, '>') + 1);
+                $nextUrl = substr($resp->linkHeader, 1, strpos($resp->linkHeader, '>') + 1);
             } catch (GuzzleException $e) {
                 if ($attempt >= self::MAX_RETRIES) {
                     throw $e;
@@ -47,6 +47,6 @@ class PullClient
             }
         }
 
-        return $results;
+        return $res;
     }
 }
